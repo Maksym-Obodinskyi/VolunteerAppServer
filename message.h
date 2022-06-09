@@ -160,7 +160,7 @@ public:
     void setRequestInfo(int request_id,
                         int request_userId,
                         location request_location,
-                        QString request_description,
+                        std::string request_description,
                         QString request_title,
                         QString request_categories,
                         QDate request_date,

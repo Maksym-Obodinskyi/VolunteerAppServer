@@ -3,6 +3,7 @@
 #include <QtDebug>
 #include <QSqlError>
 #include <iostream>
+#include <charconv>
 
 Server::Server(QObject *parent) : QTcpServer(parent)
 {
@@ -50,11 +51,6 @@ void Server::onReadyRead()
     std::cout << "onReadyRead"<<std::endl;
     std::cout << "datas: " << datas.toStdString()<<std::endl;
     this->parseUserRequest(datas);
-//    for (QTcpSocket* socket : sockets) {
-//        if (socket != sender) {
-//            std::cout << "socket != sender " << std::endl;
-//            socket->write(QByteArray::fromStdString(sender->peerAddress().toString().toStdString() + ": " + datas.toStdString()));}
-//    }
 }
 
 void Server::parseUserRequest(QByteArray &request)
@@ -98,7 +94,8 @@ void Server::parseUserRequest(QByteArray &request)
     }
     msg->process();
     connectToDB();
-    msg->sendToDB(Database);
+    int answer = msg->sendToDB(Database);
+    sendRequestStatus(std::to_chars(str.data(), str.data() + str.size(),answer));
 }
 
 int Server::getRequestsSize(const QByteArray& request)
@@ -107,6 +104,18 @@ int Server::getRequestsSize(const QByteArray& request)
     regExpr.indexIn(request);
     int size = regExpr.cap(1).toInt();
     return  size;
+}
+
+void Server::sendRequestStatus(char* status)
+{
+
+    QTcpSocket* sender = static_cast<QTcpSocket*>(QObject::sender());
+    for (QTcpSocket* socket : sockets) {
+        if (socket != sender) {
+            std::cout << "socket != sender " << std::endl;
+            socket->write(status);
+        }
+    }
 }
 void Server::connectToDB()
 {

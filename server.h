@@ -39,6 +39,8 @@ private:
     void editExistedRequestDB();
     void setRatingDB(int UsersID);
     RequestInfo* getRequesDB();
+    void sendRequestStatus(char* status);
+    char convertFromBoolToChar(bool value);
 
     int getRequestsSize(const QByteArray& request);
     QList<QTcpSocket*> sockets;

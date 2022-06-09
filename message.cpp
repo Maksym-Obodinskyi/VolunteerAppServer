@@ -56,16 +56,15 @@ int MessageLogIn::sendToDB(QSqlDatabase &Database){
     query.bindValue(0, getLogin());
     query.bindValue(1, getPassword());
 
-    if(query.exec()){
+    if(query.exec() && query.next()){
         DEBUG("query executed successfuly!");
         QSqlRecord record = query.record();
-        while(record.next())
+        DEBUG("{}", query.value(record.indexOf("id")).toString().toStdString());
         return 0;
     }else{
         WARNING("{}",query.lastError().text().toStdString());
         return 1;
     }
-    return 0;
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 MessageLogOut::MessageLogOut(int size, std::string body) : Message (size, body)
