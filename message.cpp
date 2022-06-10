@@ -24,8 +24,8 @@ void Message::process()
 {
     std::cout<<"Message process"<<std::endl;
 }
-QString Message::sendToDB([[maybe_unused]]QSqlDatabase &Database){
-    return "0";
+int Message::sendToDB([[maybe_unused]]QSqlDatabase &Database){
+    return 0;
 }
 QStringList Message::splitMessage()
 {
@@ -48,7 +48,7 @@ void MessageLogIn::process()
         setPassword(list.at(1));
     }
 }
-QString MessageLogIn::sendToDB(QSqlDatabase &Database){
+int MessageLogIn::sendToDB(QSqlDatabase &Database){
 
     QSqlQuery query(Database);
     bool res = query.prepare("SELECT id FROM UserTable WHERE PhoneNumber = ? AND Password = ?");
@@ -60,10 +60,10 @@ QString MessageLogIn::sendToDB(QSqlDatabase &Database){
         DEBUG("query executed successfuly!");
         QSqlRecord record = query.record();
         DEBUG("{}", query.value(record.indexOf("id")).toString().toStdString());
-        return "0";
+        return 0;
     }else{
         WARNING("{}", query.lastError().text().toStdString());
-        return "1";
+        return 1;
     }
 }
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -77,9 +77,9 @@ void MessageLogOut::process()
     std::cout<<"MessageLogOut process"<<std::endl;
     setUserName(QString::fromStdString(getMessage()));
 }
-QString MessageLogOut::sendToDB(QSqlDatabase &Database){
+int MessageLogOut::sendToDB(QSqlDatabase &Database){
 
-    return "0";
+    return 0;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////
 MessageAddRequest::MessageAddRequest(int size, std::string body) : Message (size, body)
@@ -126,25 +126,26 @@ void MessageAddRequest::setRequestInfo(int request_id,
     requestInfo.targetDate = request_targetDate;
 }
 
-QString MessageAddRequest::sendToDB(QSqlDatabase &Database){
+int MessageAddRequest::sendToDB(QSqlDatabase &Database){
     TRACE()
     QSqlQuery query(Database);
-    bool res = query.prepare("INSERT INTO RequestTable (UserId, Title, Description, LocationE, LocationN, Date, TargetDate)"
-                              "VALUES (:UserId, :Title, :Description, :LocationE, :LocationN, :Date, :TargetDate)");
+    bool res = query.prepare("INSERT INTO RequestTable (UserId, Title, Description, LocationE, LocationN, Category, Date, TargetDate)"
+                              "VALUES (:UserId, :Title, :Description, :LocationE, :LocationN, :Category, :Date, :TargetDate)");
     DEBUG("{}",res);
     query.bindValue(":UserId", getRequestInfo().userId);
     query.bindValue(":Title", getRequestInfo().title);
     query.bindValue(":Description", getRequestInfo().description);
     query.bindValue(":LocationE", getRequestInfo()._location.E);
     query.bindValue(":LocationN", getRequestInfo()._location.N);
+    query.bindValue(":Category", getRequestInfo().categories);
     query.bindValue(":Date", getRequestInfo().date);
     query.bindValue(":TargetDate", getRequestInfo().targetDate);
     if(query.exec()){
         DEBUG("query executed successfuly!");
-        return "0";
+        return 0;
     }else{
         WARNING("{}",query.lastError().text().toStdString());
-        return "1";
+        return 1;
     }
 }
 
@@ -160,7 +161,7 @@ void MessageRemoveRequest::process()
     setRequestID(std::stoi(getMessage()));
 }
 
-QString MessageRemoveRequest::sendToDB(QSqlDatabase &Database){
+int MessageRemoveRequest::sendToDB(QSqlDatabase &Database){
 
     QSqlQuery query(Database);
     bool res = query.prepare("DELETE FROM RequestTable WHERE id = ?");
@@ -169,10 +170,10 @@ QString MessageRemoveRequest::sendToDB(QSqlDatabase &Database){
 
     if(query.exec()){
         DEBUG("query executed successfuly!");
-        return "0";
+        return 0;
     }else{
         WARNING("{}",query.lastError().text().toStdString());
-        return "1";
+        return 1;
     }
 }
 
@@ -185,11 +186,29 @@ MessageGetRequest::MessageGetRequest(int size, std::string body) : Message (size
 void MessageGetRequest::process()
 {
     std::cout<<"MessageGetRequest process"<<std::endl;
-
+    setFilter(getMessage().c_str());
+    std::cout<< getFilter().toStdString()<<std::endl;
 }
 
-QString MessageGetRequest::sendToDB(QSqlDatabase &Database){
-    return "0";
+int MessageGetRequest::sendToDB(QSqlDatabase &Database){
+
+    QSqlQuery query(Database);
+    bool res = query.prepare("SELECT * FROM RequestTable WHERE Category = ?");
+    DEBUG("{}",res);
+    query.bindValue(0, getFilter());
+
+    if(query.exec()){
+        DEBUG("query executed successfuly!");
+        while(query.next())
+        {
+            QSqlRecord record = query.record();
+            DEBUG("{}", query.value(record.indexOf("id")).toString().toStdString());
+        }
+        return 0;
+    }else{
+        WARNING("{}", query.lastError().text().toStdString());
+        return 1;
+    }
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
 MessageNewUser::MessageNewUser(int size, std::string body) : Message (size, body)
@@ -232,7 +251,7 @@ void MessageNewUser::process()
        std::cout<< getUserInfo().name.toStdString()<<std::endl;
     }
 }
-QString MessageNewUser::sendToDB(QSqlDatabase &Database){
+int MessageNewUser::sendToDB(QSqlDatabase &Database){
 
     TRACE()
     QSqlQuery query(Database);
@@ -247,10 +266,10 @@ QString MessageNewUser::sendToDB(QSqlDatabase &Database){
     query.bindValue(":Email", getUserInfo().email);
     if(query.exec()){
         DEBUG("query executed successfuly!");
-        return "0";
+        return 0;
     }else{
         WARNING("{}",query.lastError().text().toStdString());
-        return "1";
+        return 1;
     }
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -293,7 +312,7 @@ void MessageUpdateProfile::process()
     }
 
 }
-QString MessageUpdateProfile::sendToDB(QSqlDatabase &Database){
+int MessageUpdateProfile::sendToDB(QSqlDatabase &Database){
 
     QSqlQuery query(Database);
     bool res = query.prepare("UPDATE UserTable SET Email=:email, Password=:password, Name=:name, LastName=:lastName,"
@@ -308,10 +327,10 @@ QString MessageUpdateProfile::sendToDB(QSqlDatabase &Database){
     query.bindValue(":phone", getUserInfo().phoneNumber);
     if(query.exec()){
         DEBUG("query executed successfuly!");
-        return "0";
+        return 0;
     }else{
         WARNING("{}",query.lastError().text().toStdString());
-        return "1";
+        return 1;
     }
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -359,6 +378,25 @@ void MessageUpdateRequest::setRequestInfo(int request_id,
     requestInfo.targetDate = request_targetDate;
 }
 
-QString MessageUpdateRequest::sendToDB(QSqlDatabase &Database){
-    return 0;
+int MessageUpdateRequest::sendToDB(QSqlDatabase &Database){
+    QSqlQuery query(Database);
+    bool res = query.prepare("UPDATE RequestTable SET UserId=:userId, LocationE=:locationE, LocationN=:locationN, Description=:description,"
+                             " Title=:title, Category=:category, Date=:date, TargetDate=:targetDate WHERE id=:id");
+    DEBUG("{}",res);
+    query.bindValue(":userId", getRequestInfo().userId);
+    query.bindValue(":locationE", getRequestInfo()._location.E);
+    query.bindValue(":locationN", getRequestInfo()._location.N);
+    query.bindValue(":description", getRequestInfo().description);
+    query.bindValue(":title", getRequestInfo().title);
+    query.bindValue(":category", getRequestInfo().categories);
+    query.bindValue(":date", getRequestInfo().date);
+    query.bindValue(":targetDate", getRequestInfo().targetDate);
+
+    if(query.exec()){
+        DEBUG("query executed successfuly!");
+        return 0;
+    }else{
+        WARNING("{}",query.lastError().text().toStdString());
+        return 1;
+    }
 }

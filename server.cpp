@@ -97,7 +97,7 @@ void Server::parseUserRequest(QByteArray &request)
     }
     msg->process();
     connectToDB();
-    QString answer = "";
+    QString answer;
     answer += request.constData()[0];
     answer += ":";
     answer += msg->sendToDB(Database);
