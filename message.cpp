@@ -62,8 +62,8 @@ QString MessageLogIn::sendToDB(QSqlDatabase &Database){
         DEBUG("{}", query.value(record.indexOf("id")).toString().toStdString());
         return "0";
     }else{
-        WARNING("{}",query.lastError().text().toStdString());
-        return "Sorry your credentials are wrong, try again";
+        WARNING("{}", query.lastError().text().toStdString());
+        return "1";
     }
 }
 //////////////////////////////////////////////////////////////////////////////////////////

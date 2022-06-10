@@ -1,3 +1,6 @@
+#define LOG_LEVEL _TRACE_
+#define LOG_CATEGORY "Message"
+#include "Logger.h"
 #include "server.h"
 #include "signal.h"
 #include <QtDebug>
@@ -94,8 +97,12 @@ void Server::parseUserRequest(QByteArray &request)
     }
     msg->process();
     connectToDB();
-    QString answer = msg->sendToDB(Database);
-    sendRequestStatus(std::to_chars(str.data(), str.data() + str.size(),answer));
+    QString answer = "";
+    answer += request.constData()[0];
+    answer += ":";
+    answer += msg->sendToDB(Database);
+    DEBUG("answer: {}", answer.toStdString());
+    sendRequestStatus(answer.toStdString().c_str());
 }
 
 int Server::getRequestsSize(const QByteArray& request)
@@ -106,15 +113,12 @@ int Server::getRequestsSize(const QByteArray& request)
     return  size;
 }
 
-void Server::sendRequestStatus(char* status)
+void Server::sendRequestStatus(const char* status)
 {
-
-    QTcpSocket* sender = static_cast<QTcpSocket*>(QObject::sender());
+    DEBUG("answer : {}", status);
     for (QTcpSocket* socket : sockets) {
-        if (socket != sender) {
-            std::cout << "socket != sender " << std::endl;
-            socket->write(status);
-        }
+        DEBUG("answer : {}", status);
+        socket->write(status);
     }
 }
 void Server::connectToDB()
