@@ -94,7 +94,7 @@ void Server::parseUserRequest(QByteArray &request)
     }
     msg->process();
     connectToDB();
-    int answer = msg->sendToDB(Database);
+    QString answer = msg->sendToDB(Database);
     sendRequestStatus(std::to_chars(str.data(), str.data() + str.size(),answer));
 }
 

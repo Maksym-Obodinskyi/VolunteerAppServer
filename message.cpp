@@ -24,8 +24,8 @@ void Message::process()
 {
     std::cout<<"Message process"<<std::endl;
 }
-int Message::sendToDB([[maybe_unused]]QSqlDatabase &Database){
-    return 0;
+QString Message::sendToDB([[maybe_unused]]QSqlDatabase &Database){
+    return "0";
 }
 QStringList Message::splitMessage()
 {
@@ -44,26 +44,26 @@ void MessageLogIn::process()
     QStringList list = splitMessage();
     if(!list.empty())
     {
-        setLogin(list.at(0));
+        setPhoneNumber(list.at(0));
         setPassword(list.at(1));
     }
 }
-int MessageLogIn::sendToDB(QSqlDatabase &Database){
+QString MessageLogIn::sendToDB(QSqlDatabase &Database){
 
     QSqlQuery query(Database);
     bool res = query.prepare("SELECT id FROM UserTable WHERE PhoneNumber = ? AND Password = ?");
     DEBUG("{}",res);
-    query.bindValue(0, getLogin());
+    query.bindValue(0, getPhoneNumber());
     query.bindValue(1, getPassword());
 
     if(query.exec() && query.next()){
         DEBUG("query executed successfuly!");
         QSqlRecord record = query.record();
         DEBUG("{}", query.value(record.indexOf("id")).toString().toStdString());
-        return 0;
+        return "0";
     }else{
         WARNING("{}",query.lastError().text().toStdString());
-        return 1;
+        return "Sorry your credentials are wrong, try again";
     }
 }
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -77,9 +77,9 @@ void MessageLogOut::process()
     std::cout<<"MessageLogOut process"<<std::endl;
     setUserName(QString::fromStdString(getMessage()));
 }
-int MessageLogOut::sendToDB(QSqlDatabase &Database){
+QString MessageLogOut::sendToDB(QSqlDatabase &Database){
 
-    return 0;
+    return "0";
 }
 ///////////////////////////////////////////////////////////////////////////////////////////
 MessageAddRequest::MessageAddRequest(int size, std::string body) : Message (size, body)
@@ -126,7 +126,7 @@ void MessageAddRequest::setRequestInfo(int request_id,
     requestInfo.targetDate = request_targetDate;
 }
 
-int MessageAddRequest::sendToDB(QSqlDatabase &Database){
+QString MessageAddRequest::sendToDB(QSqlDatabase &Database){
     TRACE()
     QSqlQuery query(Database);
     bool res = query.prepare("INSERT INTO RequestTable (UserId, Title, Description, LocationE, LocationN, Date, TargetDate)"
@@ -141,10 +141,10 @@ int MessageAddRequest::sendToDB(QSqlDatabase &Database){
     query.bindValue(":TargetDate", getRequestInfo().targetDate);
     if(query.exec()){
         DEBUG("query executed successfuly!");
-        return 0;
+        return "0";
     }else{
         WARNING("{}",query.lastError().text().toStdString());
-        return 1;
+        return "1";
     }
 }
 
@@ -160,7 +160,7 @@ void MessageRemoveRequest::process()
     setRequestID(std::stoi(getMessage()));
 }
 
-int MessageRemoveRequest::sendToDB(QSqlDatabase &Database){
+QString MessageRemoveRequest::sendToDB(QSqlDatabase &Database){
 
     QSqlQuery query(Database);
     bool res = query.prepare("DELETE FROM RequestTable WHERE id = ?");
@@ -169,10 +169,10 @@ int MessageRemoveRequest::sendToDB(QSqlDatabase &Database){
 
     if(query.exec()){
         DEBUG("query executed successfuly!");
-        return 0;
+        return "0";
     }else{
         WARNING("{}",query.lastError().text().toStdString());
-        return 1;
+        return "1";
     }
 }
 
@@ -188,8 +188,8 @@ void MessageGetRequest::process()
 
 }
 
-int MessageGetRequest::sendToDB(QSqlDatabase &Database){
-    return 0;
+QString MessageGetRequest::sendToDB(QSqlDatabase &Database){
+    return "0";
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
 MessageNewUser::MessageNewUser(int size, std::string body) : Message (size, body)
@@ -231,9 +231,8 @@ void MessageNewUser::process()
                     list.at(7).toDouble());
        std::cout<< getUserInfo().name.toStdString()<<std::endl;
     }
-    std::cout<<"MessageNewUser process end"<<std::endl;
 }
-int MessageNewUser::sendToDB(QSqlDatabase &Database){
+QString MessageNewUser::sendToDB(QSqlDatabase &Database){
 
     TRACE()
     QSqlQuery query(Database);
@@ -248,10 +247,10 @@ int MessageNewUser::sendToDB(QSqlDatabase &Database){
     query.bindValue(":Email", getUserInfo().email);
     if(query.exec()){
         DEBUG("query executed successfuly!");
-        return 0;
+        return "0";
     }else{
         WARNING("{}",query.lastError().text().toStdString());
-        return 1;
+        return "1";
     }
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -294,8 +293,26 @@ void MessageUpdateProfile::process()
     }
 
 }
-int MessageUpdateProfile::sendToDB(QSqlDatabase &Database){
-    return 0;
+QString MessageUpdateProfile::sendToDB(QSqlDatabase &Database){
+
+    QSqlQuery query(Database);
+    bool res = query.prepare("UPDATE UserTable SET Email=:email, Password=:password, Name=:name, LastName=:lastName,"
+                             " Picture=:picture, Rating=:rating WHERE PhoneNumber=:phone");
+    DEBUG("{}",res);
+    query.bindValue(":email", getUserInfo().email);
+    query.bindValue(":password", getUserInfo().password);
+    query.bindValue(":name", getUserInfo().name);
+    query.bindValue(":lastName", getUserInfo().lastName);
+    query.bindValue(":picture", getUserInfo().picture);
+    query.bindValue(":rating", getUserInfo().rating);
+    query.bindValue(":phone", getUserInfo().phoneNumber);
+    if(query.exec()){
+        DEBUG("query executed successfuly!");
+        return "0";
+    }else{
+        WARNING("{}",query.lastError().text().toStdString());
+        return "1";
+    }
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////
 MessageUpdateRequest::MessageUpdateRequest(int size, std::string body) : Message (size, body)
@@ -342,6 +359,6 @@ void MessageUpdateRequest::setRequestInfo(int request_id,
     requestInfo.targetDate = request_targetDate;
 }
 
-int MessageUpdateRequest::sendToDB(QSqlDatabase &Database){
+QString MessageUpdateRequest::sendToDB(QSqlDatabase &Database){
     return 0;
 }
