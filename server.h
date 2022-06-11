@@ -39,7 +39,7 @@ private:
     void editExistedRequestDB();
     void setRatingDB(int UsersID);
     RequestInfo* getRequesDB();
-    void sendRequestStatus(const char* status);
+    void sendRequestStatus(const QByteArray& status);
     char convertFromBoolToChar(bool value);
 
     int getRequestsSize(const QByteArray& request);

@@ -104,12 +104,8 @@ void Server::parseUserRequest(QByteArray &request)
             break;
     }
     msg->process();
-    QString answer;
-    answer += request.constData()[0];
-    answer += ":";
-    answer += QString::number(msg->sendToDB(Database));
-    DEBUG("answer: {}", answer.toStdString());
-    sendRequestStatus(answer.toStdString().c_str());
+    auto answer = msg->sendToDB(Database);
+    sendRequestStatus(answer->serialize());
 }
 
 int Server::getRequestsSize(const QByteArray& request)
@@ -121,12 +117,11 @@ int Server::getRequestsSize(const QByteArray& request)
     return  size;
 }
 
-void Server::sendRequestStatus(const char* status)
+void Server::sendRequestStatus(const QByteArray& status)
 {
     TRACE();
     DEBUG("answer : {}", status);
     for (QTcpSocket* socket : sockets) {
-        DEBUG("answer : {}", status);
         socket->write(status);
     }
 }

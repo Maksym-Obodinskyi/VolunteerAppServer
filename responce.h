@@ -12,7 +12,7 @@ struct Responce {
     char type;
     int err;
 
-    Responce(char _type = '|') : type(_type) {}
+    explicit Responce(char _type = '|') : type(_type) {}
 
     virtual QByteArray serialize()
     {
