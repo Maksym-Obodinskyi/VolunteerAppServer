@@ -32,7 +32,7 @@ std::unique_ptr<Responce> Message::sendToDB([[maybe_unused]]QSqlDatabase &Databa
 
 QStringList Message::splitMessage()
 {
-    return QString::fromStdString(getMessage()).split(QRegExp(":"), QString::SkipEmptyParts);
+    return QString::fromStdString(getMessage()).split(QRegExp(":"));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -252,12 +252,12 @@ void MessageNewUser::setUserInfo(QString user_email,
                                  QString user_phoneNumber,
                                  QString user_picture)
 {
-    userInfo.name = user_name;
     userInfo.email = user_email;
     userInfo.password = user_password;
-    userInfo.picture = user_picture;
+    userInfo.name = user_name;
     userInfo.lastName = user_lastName;
     userInfo.phoneNumber = user_phoneNumber;
+    userInfo.picture = user_picture;
     std::cout<<"setUserInfo"<<std::endl;
 }
 
@@ -265,6 +265,7 @@ void MessageNewUser::process()
 {
     std::cout<<"MessageNewUser process"<<std::endl;
     QStringList list = splitMessage();
+    DEBUG("size - {}", list.size());
     if(!list.empty() && list.size()==6)
     {
         setUserInfo(list.at(0),
@@ -277,8 +278,8 @@ void MessageNewUser::process()
     }
 }
 
-std::unique_ptr<Responce> MessageNewUser::sendToDB(QSqlDatabase &Database){
-
+std::unique_ptr<Responce> MessageNewUser::sendToDB(QSqlDatabase &Database)
+{
     TRACE()
     QSqlQuery query(Database);
     bool res = query.prepare("INSERT INTO UserTable (PhoneNumber, Password, Name, LastName, Picture, Email) VALUES (:PhoneNumber, :Password, :Name, :LastName, :Picture, :Email)");
@@ -325,7 +326,7 @@ void MessageUpdateProfile::process()
 {
     std::cout<<"MessageUpdateProfile process"<<std::endl;
     QStringList list = splitMessage();
-    if(!list.empty() && list.size()==7)
+    if(!list.empty() && list.size()==6)
     {
         setUserInfo(list.at(0),
                     list.at(1),
@@ -478,7 +479,32 @@ QByteArray MessageLogOut::serialize()
 QByteArray MessageNewUser::serialize()
 {
     TRACE();
-    return QByteArray();
+    QByteArray ret;
+    ret += 'n';
+    ret += ':';
+    char res[64];
+    [[maybe_unused]] auto [ptr, ec] = std::to_chars(res, res + 64,
+                                                      userInfo.email.size()
+                                                    + userInfo.password.size()
+                                                    + userInfo.name.size()
+                                                    + userInfo.lastName.size()
+                                                    + userInfo.phoneNumber.size()
+                                                    + userInfo.picture.size()
+                                                    + 6);
+    ret.append(res, ptr - res);
+    ret += '|';
+    ret += userInfo.email.toUtf8();
+    ret += ':';
+    ret += userInfo.password.toUtf8();
+    ret += ':';
+    ret += userInfo.name.toUtf8();
+    ret += ':';
+    ret += userInfo.lastName.toUtf8();
+    ret += ':';
+    ret += userInfo.phoneNumber.toUtf8();
+    ret += ':';
+    ret += userInfo.picture.toUtf8();
+    return ret;
 }
 
 QByteArray MessageUpdateProfile::serialize()

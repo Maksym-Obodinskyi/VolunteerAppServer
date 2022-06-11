@@ -61,6 +61,7 @@ class MessageLogIn : public Message
 {
     Q_OBJECT
 public:
+    MessageLogIn() {}
     explicit MessageLogIn (int size, std::string body);
     void process() override;
     QByteArray serialize() override;
@@ -81,6 +82,7 @@ class MessageLogOut : public Message
 {
     Q_OBJECT
 public:
+    MessageLogOut() {}
     explicit MessageLogOut (int size, std::string body);
     void process() override;
     QByteArray serialize() override;
@@ -96,6 +98,7 @@ class MessageNewUser : public Message
 {
     Q_OBJECT
 public:
+    MessageNewUser() {}
     explicit MessageNewUser (int size, std::string body);
     void process() override;
     QByteArray serialize() override;
@@ -116,6 +119,7 @@ class MessageUpdateProfile : public Message
 {
     Q_OBJECT
 public:
+    MessageUpdateProfile() {}
     explicit MessageUpdateProfile (int size, std::string body);
     void process() override;
     QByteArray serialize() override;
@@ -137,6 +141,7 @@ class MessageAddRequest : public Message
 {
     Q_OBJECT
 public:
+    MessageAddRequest() {}
     explicit MessageAddRequest (int size, std::string body);
     void process() override;
     QByteArray serialize() override;
@@ -159,6 +164,7 @@ class MessageGetRequest : public Message
 {
     Q_OBJECT
 public:
+    MessageGetRequest() {}
     explicit MessageGetRequest (int size, std::string body);
     void process() override;
     QByteArray serialize() override;
@@ -176,6 +182,7 @@ class MessageUpdateRequest : public Message
 {
     Q_OBJECT
 public:
+    MessageUpdateRequest() {}
     explicit MessageUpdateRequest (int size, std::string body);
     void process() override;
     QByteArray serialize() override;
@@ -200,6 +207,7 @@ class MessageRemoveRequest : public Message
 {
     Q_OBJECT
 public:
+    MessageRemoveRequest() {}
     explicit MessageRemoveRequest (int size, std::string body);
     void process() override;
     QByteArray serialize() override;
