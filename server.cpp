@@ -1,8 +1,9 @@
 #define LOG_LEVEL _TRACE_
-#define LOG_CATEGORY "Message"
+#define LOG_CATEGORY "Server"
 #include "Logger.h"
+
 #include "server.h"
-#include "signal.h"
+#include "responce.h"
 #include <QtDebug>
 #include <QSqlError>
 #include <iostream>
@@ -10,24 +11,26 @@
 
 Server::Server(QObject *parent) : QTcpServer(parent)
 {
-
+    TRACE();
+    connectToDB();
 }
 
 Server::~Server()
 {
-    delete msg;
+    TRACE();
+    closeConnection();
 }
 
 void Server::Run()
 {
-    std::cout << "Server Run"<<std::endl;
+    TRACE();
     this->listen(QHostAddress("127.0.0.1"), 4243); ////TODO: make dynamic generation of port
     connect(this, SIGNAL(newConnection()), this, SLOT(onNewConnection()));
 }
 
 void Server::onNewConnection()
 {
-    std::cout << "onNewConnection"<<std::endl;
+    TRACE();
     QTcpSocket *clientSocket = this->nextPendingConnection();
     connect(clientSocket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
     connect(clientSocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(onSocketStateChanged(QAbstractSocket::SocketState)));
@@ -39,6 +42,7 @@ void Server::onNewConnection()
 
 void Server::onSocketStateChanged(QAbstractSocket::SocketState socketState)
 {
+    TRACE();
     if (socketState == QAbstractSocket::UnconnectedState)
     {
         QTcpSocket* sender = static_cast<QTcpSocket*>(QObject::sender());
@@ -48,19 +52,22 @@ void Server::onSocketStateChanged(QAbstractSocket::SocketState socketState)
 
 void Server::onReadyRead()
 {
+    TRACE();
     QTcpSocket* sender = static_cast<QTcpSocket*>(QObject::sender());
     QByteArray datas = sender->readAll();
 
-    std::cout << "onReadyRead"<<std::endl;
     std::cout << "datas: " << datas.toStdString()<<std::endl;
     this->parseUserRequest(datas);
 }
 
 void Server::parseUserRequest(QByteArray &request)
 {
+    TRACE();
     if(request.isEmpty()) {
       return;
     }
+
+    std::unique_ptr<Message> msg;
 
     int size = this->getRequestsSize(request);
     QRegExp reg("\\|(.+)");
@@ -69,34 +76,34 @@ void Server::parseUserRequest(QByteArray &request)
 
     switch(request[0]){
         case 'l':
-            msg = new MessageLogIn(size, body);
+            msg.reset(new MessageLogIn(size, body));
             break;
         case 'g':
-            msg = new MessageGetRequest(size, body);
+            msg.reset(new MessageGetRequest(size, body));
             break;
         case 'u':
-            msg = new MessageUpdateRequest(size, body);
+            msg.reset(new MessageUpdateRequest(size, body));
             break;
         case 'p':
-            msg = new MessageUpdateProfile(size, body);
+            msg.reset(new MessageUpdateProfile(size, body));
             break;
         case 'n':
-            msg = new MessageNewUser(size, body);
+            msg.reset(new MessageNewUser(size, body));
             break;
         case 'a':
-            msg = new MessageAddRequest(size, body);
+            msg.reset(new MessageAddRequest(size, body));
             break;
         case 'r':
-            msg = new MessageRemoveRequest(size, body);
+            msg.reset(new MessageRemoveRequest(size, body));
             break;
         case 'd':
-            msg = new MessageLogOut(size, body);
+            msg.reset( new MessageLogOut(size, body));
             break;
         default:
+            WARNING("Unrecognized message type received - {}", request[0]);
             break;
     }
     msg->process();
-    connectToDB();
     QString answer;
     answer += request.constData()[0];
     answer += ":";
@@ -107,6 +114,7 @@ void Server::parseUserRequest(QByteArray &request)
 
 int Server::getRequestsSize(const QByteArray& request)
 {
+    TRACE();
     QRegExp regExpr("\\w+:([0-9]+)");
     regExpr.indexIn(request);
     int size = regExpr.cap(1).toInt();
@@ -115,6 +123,7 @@ int Server::getRequestsSize(const QByteArray& request)
 
 void Server::sendRequestStatus(const char* status)
 {
+    TRACE();
     DEBUG("answer : {}", status);
     for (QTcpSocket* socket : sockets) {
         DEBUG("answer : {}", status);
@@ -123,7 +132,7 @@ void Server::sendRequestStatus(const char* status)
 }
 void Server::connectToDB()
 {
-    std::cout << "connectToDB"<<std::endl;
+    TRACE();
     Database = QSqlDatabase::addDatabase("QSQLITE", "SQLITE");
 
     Database.setDatabaseName("VolunteerApp.db");
@@ -139,21 +148,24 @@ void Server::connectToDB()
 
 bool Server::closeConnection()
 {
+    TRACE();
     Database.close();
     return 0;
 }
 
 void Server::receiveUsersRequest()
 {
-
+    TRACE();
 }
 
 RequestInfo* Server::sendRequestInfo()
 {
+    TRACE();
     return nullptr;
 }
 
 UserInfo* Server::sendUsersInfo()
 {
+    TRACE();
     return nullptr;
 }

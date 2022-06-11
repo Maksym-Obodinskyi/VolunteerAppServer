@@ -31,4 +31,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     Logger.h \
     message.h \
+    responce.h \
     server.h

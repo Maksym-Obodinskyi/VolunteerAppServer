@@ -44,7 +44,6 @@ private:
 
     int getRequestsSize(const QByteArray& request);
     QList<QTcpSocket*> sockets;
-    Message* msg = nullptr;
     QSqlDatabase Database;
 };
 
