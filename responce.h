@@ -1,6 +1,9 @@
 #ifndef RESPONCE_H
 #define RESPONCE_H
 
+#include <iostream>
+
+
 #include <QByteArray>
 
 #include <charconv>
@@ -19,8 +22,9 @@ struct Responce {
         char arr[5];
         auto [ptr, ec] = std::to_chars(arr, arr + 5, err);
         if (ec == std::errc()) {
-            arr[ptr - arr] = '\0';
-            ret += arr;
+            for (auto symbol = arr; symbol != ptr; symbol++) {
+                ret += *symbol;
+            }
         } else {
             ret += '9';
         }
@@ -29,9 +33,10 @@ struct Responce {
 
     virtual void deserialize(QByteArray arr)
     {
-        if (arr.size() > 1) {
+        std::cout << "deserialize - " << arr.constData() << std::endl;
+        if (arr.size() >= 1) {
             int result;
-            const auto[_, ec] = std::from_chars(arr.constData() + 2, arr.constData() + arr.size(), result);
+            const auto[_, ec] = std::from_chars(arr.constData(), arr.constData() + arr.size(), result);
 
             if (ec == std::errc()) {
                 err = result;
