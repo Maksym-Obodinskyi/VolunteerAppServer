@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QDateTime>
 #include <QSqlQuery>
+#include "responce.h"
 
 struct location
 {
@@ -42,7 +43,7 @@ public:
     explicit Message(QObject *parent = nullptr);
     Message(int msgSize, std::string body);
     virtual void process();
-    virtual int sendToDB(QSqlDatabase &Database);
+    virtual Responce* sendToDB(QSqlDatabase &Database);
     std::string getMessage() {return msg;}
     QStringList splitMessage();
 signals:
@@ -57,7 +58,7 @@ class MessageLogIn : public Message
 public:
     explicit MessageLogIn (int size, std::string body);
     void process() override;
-    int sendToDB(QSqlDatabase &Database) override;
+    LogInResponce* sendToDB(QSqlDatabase &Database) override;
     QString getPhoneNumber() {return requestBody.phoneNumber;}
     QString getPassword() {return requestBody.password;}
     void setPhoneNumber(QString log){requestBody.phoneNumber = log;}
@@ -76,7 +77,7 @@ class MessageLogOut : public Message
 public:
     explicit MessageLogOut (int size, std::string body);
     void process() override;
-    int sendToDB(QSqlDatabase &Database) override;
+    LogOutResponce* sendToDB(QSqlDatabase &Database) override;
     void setUserName(QString user_name){userName = user_name;}
     QString getUserName() {return userName;}
 signals:
@@ -90,7 +91,7 @@ class MessageNewUser : public Message
 public:
     explicit MessageNewUser (int size, std::string body);
     void process() override;
-    int sendToDB(QSqlDatabase &Database) override;
+    NewUserResponce* sendToDB(QSqlDatabase &Database) override;
     UserInfo getUserInfo(){return userInfo;}
     void setUserInfo(int user_id,
                      QString user_login,
@@ -111,7 +112,7 @@ class MessageUpdateProfile : public Message
 public:
     explicit MessageUpdateProfile (int size, std::string body);
     void process() override;
-    int sendToDB(QSqlDatabase &Database) override;
+    UpdateProfileResponce* sendToDB(QSqlDatabase &Database) override;
     UserInfo getUserInfo(){return userInfo;}
     void setUserInfo(int user_id,
                      QString user_login,
@@ -133,7 +134,7 @@ class MessageAddRequest : public Message
 public:
     explicit MessageAddRequest (int size, std::string body);
     void process() override;
-    int sendToDB(QSqlDatabase &Database) override;
+    AddRequestResponce* sendToDB(QSqlDatabase &Database) override;
     RequestInfo getRequestInfo(){return requestInfo;}
     void setRequestInfo(int request_id,
                         int request_userId,
@@ -155,7 +156,7 @@ class MessageGetRequest : public Message
 public:
     explicit MessageGetRequest (int size, std::string body);
     void process() override;
-    int sendToDB(QSqlDatabase &Database) override;
+    GetRequestResponce* sendToDB(QSqlDatabase &Database) override;
     QString getFilter(){return filter;}
     void setFilter(QString filt){ filter = filt;}
 
@@ -171,7 +172,7 @@ class MessageUpdateRequest : public Message
 public:
     explicit MessageUpdateRequest (int size, std::string body);
     void process() override;
-    int sendToDB(QSqlDatabase &Database) override;
+    UpdateRequestResponce* sendToDB(QSqlDatabase &Database) override;
     RequestInfo getRequestInfo(){return requestInfo;}
     void setRequestInfo(int request_id,
                         int request_userId,
@@ -194,7 +195,7 @@ class MessageRemoveRequest : public Message
 public:
     explicit MessageRemoveRequest (int size, std::string body);
     void process() override;
-    int sendToDB(QSqlDatabase &Database) override;
+    RemoveRequestResponce* sendToDB(QSqlDatabase &Database) override;
     void setRequestID(int request){requestID = request;}
     int getRequestID() {return requestID;}
 signals:

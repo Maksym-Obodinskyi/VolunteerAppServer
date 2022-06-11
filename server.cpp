@@ -76,25 +76,25 @@ void Server::parseUserRequest(QByteArray &request)
 
     switch(request[0]){
         case 'l':
-            msg.reset(new MessageLogIn(size, body));
+            msg.reset( new MessageLogIn(size, body));
             break;
         case 'g':
-            msg.reset(new MessageGetRequest(size, body));
+            msg.reset( new MessageGetRequest(size, body));
             break;
         case 'u':
-            msg.reset(new MessageUpdateRequest(size, body));
+            msg.reset( new MessageUpdateRequest(size, body));
             break;
         case 'p':
-            msg.reset(new MessageUpdateProfile(size, body));
+            msg.reset( new MessageUpdateProfile(size, body));
             break;
         case 'n':
-            msg.reset(new MessageNewUser(size, body));
+            msg.reset( new MessageNewUser(size, body));
             break;
         case 'a':
-            msg.reset(new MessageAddRequest(size, body));
+            msg.reset( new MessageAddRequest(size, body));
             break;
         case 'r':
-            msg.reset(new MessageRemoveRequest(size, body));
+            msg.reset( new MessageRemoveRequest(size, body));
             break;
         case 'd':
             msg.reset( new MessageLogOut(size, body));
