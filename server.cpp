@@ -107,7 +107,7 @@ void Server::parseUserRequest(QByteArray &request)
     QString answer;
     answer += request.constData()[0];
     answer += ":";
-    answer += msg->sendToDB(Database);
+    answer += QString::number(msg->sendToDB(Database));
     DEBUG("answer: {}", answer.toStdString());
     sendRequestStatus(answer.toStdString().c_str());
 }
