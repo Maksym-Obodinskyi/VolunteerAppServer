@@ -131,15 +131,29 @@ void MessageAddRequest::setRequestInfo(QString UserPhone,
     requestInfo.targetDate = request_targetDate;
 }
 
-std::unique_ptr<Responce> MessageAddRequest::sendToDB(QSqlDatabase &Database){ /////TODO: set user id accordint to user phone
+std::unique_ptr<Responce> MessageAddRequest::sendToDB(QSqlDatabase &Database){
     TRACE()
     QSqlQuery query(Database);
-     query.prepare("SELECT id FROM UsertTable WHERE UserPhone = ?");
+    std::unique_ptr<Responce> ptr(new AddRequestResponce);
+    DEBUG("User phone: {}", getRequestInfo().UserPhone.toStdString())
+    bool res =query.prepare("SELECT id FROM UserTable WHERE PhoneNumber = ?");
+    query.addBindValue(getRequestInfo().UserPhone);
+    int UserId =0;
+    if (query.exec()) {
+        if(query.next()){
+            QSqlRecord record = query.record();
+            UserId = query.value(record.indexOf("id")).toInt();
+            DEBUG("User id: {}", query.value(record.indexOf("id")).toString().toStdString());}
+    } else {
+            WARNING("User with this phone number is not found")
+            ptr->err = 1;
+            return ptr;
+    }
 
-    bool res = query.prepare("INSERT INTO RequestTable (UserId, Title, Description, LocationE, LocationN, Category, Date, TargetDate)"
+    res = query.prepare("INSERT INTO RequestTable (UserId, Title, Description, LocationE, LocationN, Category, Date, TargetDate)"
                               "VALUES (:UserId, :Title, :Description, :LocationE, :LocationN, :Category, :Date, :TargetDate)");
     DEBUG("{}",res);
-    query.bindValue(":UserPhone", getRequestInfo().UserPhone);
+    query.bindValue(":UserId", UserId);
     query.bindValue(":Title", getRequestInfo().title);
     query.bindValue(":Description", getRequestInfo().description);
     query.bindValue(":LocationE", getRequestInfo()._location.E);
@@ -147,12 +161,12 @@ std::unique_ptr<Responce> MessageAddRequest::sendToDB(QSqlDatabase &Database){ /
     query.bindValue(":Category", getRequestInfo().categories);
     query.bindValue(":Date", getRequestInfo().date);
     query.bindValue(":TargetDate", getRequestInfo().targetDate);
-    std::unique_ptr<Responce> ptr(new AddRequestResponce);
+
     if(query.exec()){
         DEBUG("query executed successfuly!");
         ptr->err = 0;
         return ptr;
-    }else{
+    } else {
         WARNING("{}",query.lastError().text().toStdString());
         ptr->err = 1;
         return ptr;
@@ -189,7 +203,7 @@ std::unique_ptr<Responce> MessageRemoveRequest::sendToDB(QSqlDatabase &Database)
     }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////todo
+////////////////////////////////////////////////////////////////////////////////////////////todooo
 MessageGetRequest::MessageGetRequest(int size, std::string body) : Message (size, body)
 {
 
@@ -236,13 +250,11 @@ void MessageNewUser::setUserInfo(QString user_email,
                                  QString user_name,
                                  QString user_lastName,
                                  QString user_phoneNumber,
-                                 QString user_picture,
-                                 double user_rating)
+                                 QString user_picture)
 {
     userInfo.name = user_name;
     userInfo.email = user_email;
     userInfo.password = user_password;
-    userInfo.rating = user_rating;
     userInfo.picture = user_picture;
     userInfo.lastName = user_lastName;
     userInfo.phoneNumber = user_phoneNumber;
@@ -253,15 +265,14 @@ void MessageNewUser::process()
 {
     std::cout<<"MessageNewUser process"<<std::endl;
     QStringList list = splitMessage();
-    if(!list.empty() && list.size()==7)
+    if(!list.empty() && list.size()==6)
     {
         setUserInfo(list.at(0),
                     list.at(1),
                     list.at(2),
                     list.at(3),
                     list.at(4),
-                    list.at(5),
-                    list.at(6).toDouble());
+                    list.at(5));
        std::cout<< getUserInfo().name.toStdString()<<std::endl;
     }
 }
@@ -270,14 +281,13 @@ std::unique_ptr<Responce> MessageNewUser::sendToDB(QSqlDatabase &Database){
 
     TRACE()
     QSqlQuery query(Database);
-    bool res = query.prepare("INSERT INTO UserTable (PhoneNumber, Password, Name, LastName, Picture, Rating, Email) VALUES (:PhoneNumber, :Password, :Name, :LastName, :Picture, :Rating, :Email)");
+    bool res = query.prepare("INSERT INTO UserTable (PhoneNumber, Password, Name, LastName, Picture, Email) VALUES (:PhoneNumber, :Password, :Name, :LastName, :Picture, :Email)");
     DEBUG("{}",res);
     query.bindValue(":PhoneNumber", getUserInfo().phoneNumber);
     query.bindValue(":Password", getUserInfo().password);
     query.bindValue(":Name", getUserInfo().name);
     query.bindValue(":LastName", getUserInfo().lastName);
     query.bindValue(":Picture", getUserInfo().picture);
-    query.bindValue(":Rating", getUserInfo().rating);
     query.bindValue(":Email", getUserInfo().email);
     std::unique_ptr<Responce> ptr(new NewUserResponce);
     if(query.exec()){
@@ -301,13 +311,11 @@ void MessageUpdateProfile::setUserInfo(QString user_email,
                                      QString user_name,
                                      QString user_lastName,
                                      QString user_phoneNumber,
-                                     QString user_picture,
-                                     double user_rating)
+                                     QString user_picture)
 {
     userInfo.name = user_name;
     userInfo.email = user_email;
     userInfo.password = user_password;
-    userInfo.rating = user_rating;
     userInfo.picture = user_picture;
     userInfo.lastName = user_lastName;
     userInfo.phoneNumber = user_phoneNumber;
@@ -324,24 +332,21 @@ void MessageUpdateProfile::process()
                     list.at(2),
                     list.at(3),
                     list.at(4),
-                    list.at(5),
-                    list.at(6).toDouble());
+                    list.at(5));
     }
-
 }
 
 std::unique_ptr<Responce> MessageUpdateProfile::sendToDB(QSqlDatabase &Database){
 
     QSqlQuery query(Database);
     bool res = query.prepare("UPDATE UserTable SET Email=:email, Password=:password, Name=:name, LastName=:lastName,"
-                             " Picture=:picture, Rating=:rating WHERE PhoneNumber=:phone");
+                             " Picture=:picture WHERE PhoneNumber=:phone");
     DEBUG("{}",res);
     query.bindValue(":email", getUserInfo().email);
     query.bindValue(":password", getUserInfo().password);
     query.bindValue(":name", getUserInfo().name);
     query.bindValue(":lastName", getUserInfo().lastName);
     query.bindValue(":picture", getUserInfo().picture);
-    query.bindValue(":rating", getUserInfo().rating);
     query.bindValue(":phone", getUserInfo().phoneNumber);
     std::unique_ptr<Responce> ptr(new UpdateProfileResponce);
     if(query.exec()){
@@ -401,10 +406,23 @@ void MessageUpdateRequest::setRequestInfo(int request_id,
 
 std::unique_ptr<Responce> MessageUpdateRequest::sendToDB(QSqlDatabase &Database){ ///////////////////tododdodododod
     QSqlQuery query(Database);
-    bool res = query.prepare("UPDATE RequestTable SET UserId=:userId, LocationE=:locationE, LocationN=:locationN, Description=:description,"
+    std::unique_ptr<Responce> ptr(new UpdateRequestResponce);
+    bool res =query.prepare("SELECT id FROM UserTable WHERE PhoneNumber = ?");
+    query.addBindValue(getRequestInfo().UserPhone);
+    int UserId =0;
+    if(query.exec() && query.next()){
+            QSqlRecord record = query.record();
+            UserId = query.value(record.indexOf("id")).toInt();
+            DEBUG("User id: {}", query.value(record.indexOf("id")).toString().toStdString());
+    } else {            WARNING("User with this phone number is not found")
+            ptr->err = 1;
+            return ptr;
+    }
+
+    res = query.prepare("UPDATE RequestTable SET UserId=:userId, LocationE=:locationE, LocationN=:locationN, Description=:description,"
                              " Title=:title, Category=:category, Date=:date, TargetDate=:targetDate WHERE id=:id");
     DEBUG("{}",res);
-    query.bindValue(":userPhone", getRequestInfo().UserPhone);
+    query.bindValue(":userId", UserId);
     query.bindValue(":locationE", getRequestInfo()._location.E);
     query.bindValue(":locationN", getRequestInfo()._location.N);
     query.bindValue(":description", getRequestInfo().description);
@@ -412,7 +430,6 @@ std::unique_ptr<Responce> MessageUpdateRequest::sendToDB(QSqlDatabase &Database)
     query.bindValue(":category", getRequestInfo().categories);
     query.bindValue(":date", getRequestInfo().date);
     query.bindValue(":targetDate", getRequestInfo().targetDate);
-    std::unique_ptr<Responce> ptr(new UpdateRequestResponce);
 
     if(query.exec()){
         DEBUG("query executed successfuly!");

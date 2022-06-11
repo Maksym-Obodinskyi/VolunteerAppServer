@@ -13,18 +13,6 @@ struct location
     double E;
 };
 
-struct RequestInfo
-{
-    int id;
-    QString UserPhone;
-    location _location;
-    QString description;
-    QString title;
-    QString categories;
-    int date;
-    int targetDate;
-};
-
 struct UserInfo
 {
     int id;
@@ -36,6 +24,21 @@ struct UserInfo
     QString picture;
     double rating;
 };
+
+struct RequestInfo
+{
+    int id;
+    QString UserPhone;
+    location _location;
+    QString description;
+    QString title;
+    QString categories;
+    int date;
+    int targetDate;
+    UserInfo userInfo;
+};
+
+
 
 class Message : public QObject
 {
@@ -103,8 +106,7 @@ public:
                      QString user_name,
                      QString user_lastName,
                      QString user_phoneNumber,
-                     QString user_picture,
-                     double user_rating);
+                     QString user_picture);
 signals:
 private:
     UserInfo userInfo;
@@ -124,8 +126,7 @@ public:
                      QString user_name,
                      QString user_lastName,
                      QString user_phoneNumber,
-                     QString user_picture,
-                     double user_rating);
+                     QString user_picture);
 signals:
 private:
     UserInfo userInfo;
