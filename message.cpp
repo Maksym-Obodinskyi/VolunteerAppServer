@@ -10,6 +10,7 @@
 #include <QSqlRecord>
 #include <QVariant>
 #include <QVector>
+#include <charconv>
 
 Message::Message(QObject *parent) : QObject(parent)
 {

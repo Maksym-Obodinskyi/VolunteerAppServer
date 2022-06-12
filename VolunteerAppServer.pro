@@ -20,6 +20,7 @@ SOURCES += \
         UserInfo.cpp \
         main.cpp \
         message.cpp \
+        responce.cpp \
         server.cpp
 
 TRANSLATIONS += \
