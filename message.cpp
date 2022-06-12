@@ -39,9 +39,33 @@ QStringList Message::splitMessage()
 {
     return QString::fromStdString(getMessage()).split(QRegExp(":"));
 }
-QImage getPicture(QString picName)
+QImage Message::getPicture(QString picName)
 {
 
+}
+QImage Message::deserializePicture(QString image)
+{
+
+    QStringList list = image.split(QRegExp("#"));
+    DEBUG("Image: {}", image.toStdString());
+    int picWidth = list[0].toInt();
+    int picHeidht = list[1].toInt();
+    qsizetype picBytesPerLine = list[2].toInt();
+    QImage::Format picFormat = static_cast<QImage::Format>(list[3].toInt());
+    QByteArray ba = QByteArray::fromHex(list[4].toLatin1());
+    const uchar* bits = reinterpret_cast<const unsigned char *>(ba.constData());
+    QImage pic(bits, picWidth, picHeidht, picBytesPerLine, picFormat);
+    return pic;
+}
+uchar* Message::serializePicture(QImage &image)
+{
+    int picWidth = image.width();
+    int picHeidht = image.height();
+    qsizetype picBytesPerLine = image.bytesPerLine();
+    QImage::Format picFormat = image.format();
+    uchar* pic = picWidth + '#' + picHeidht + '#' + picBytesPerLine + '#' +picFormat + '#' + image.bits();
+    DEBUG("Image: {}", pic);
+    return pic;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////
 MessageLogIn::MessageLogIn(int size, std::string body) : Message (size, body)
@@ -79,7 +103,7 @@ std::unique_ptr<Responce> MessageLogIn::sendToDB(QSqlDatabase &Database){
         ptr->userInfo.lastName = query.value(record.indexOf("LastName")).toString();
         ptr->userInfo.email = query.value(record.indexOf("Email")).toString();
         ptr->userInfo.phoneNumber = query.value(record.indexOf("PhoneNumber")).toString();
-        ptr->userInfo.picture = getPicture(ptr->userInfo.phoneNumber);
+        ptr->userInfo.picture.load(ptr->userInfo.phoneNumber);
 
         ptr->err = 0;
         return std::unique_ptr<Responce>(ptr);
@@ -303,7 +327,7 @@ std::unique_ptr<Responce> MessageGetRequest::sendToDB(QSqlDatabase &Database){
                 request.userInfo.lastName = queryUser.value(record.indexOf("LastName")).toString();
                 request.userInfo.email = queryUser.value(record.indexOf("Email")).toString();
                 request.userInfo.phoneNumber = queryUser.value(record.indexOf("PhoneNumber")).toString();
-                request.userInfo.picture = queryUser.value(record.indexOf("Picture")).toString();
+                request.userInfo.picture.load(request.userInfo.phoneNumber);
             }
             ptr->requestsList.append(request);
         }
@@ -325,7 +349,7 @@ void MessageNewUser::setUserInfo(QString user_email,
                                  QString user_name,
                                  QString user_lastName,
                                  QString user_phoneNumber,
-                                 QString user_picture)
+                                 QImage user_picture)
 {
     userInfo.name = user_name;
     userInfo.email = user_email;
@@ -341,14 +365,16 @@ void MessageNewUser::process()
     std::cout<<"MessageNewUser process"<<std::endl;
     QStringList list = splitMessage();
     DEBUG("size - {}", list.size());
+
     if(!list.empty() && list.size()==6)
     {
+        QImage pic = deserializePicture(list.at(5));
         setUserInfo(list.at(0),
                     list.at(1),
                     list.at(2),
                     list.at(3),
                     list.at(4),
-                    list.at(5));
+                    pic);////////////////todo
        std::cout<< getUserInfo().name.toStdString()<<std::endl;
     }
 }
@@ -363,7 +389,6 @@ std::unique_ptr<Responce> MessageNewUser::sendToDB(QSqlDatabase &Database)
     query.bindValue(":Password", getUserInfo().password);
     query.bindValue(":Name", getUserInfo().name);
     query.bindValue(":LastName", getUserInfo().lastName);
-    //query.bindValue(":Picture", getUserInfo().picture);
     query.bindValue(":Email", getUserInfo().email);
     std::unique_ptr<Responce> ptr(new NewUserResponce);
     if(query.exec()){
@@ -387,7 +412,7 @@ void MessageUpdateProfile::setUserInfo(QString user_email,
                                      QString user_name,
                                      QString user_lastName,
                                      QString user_phoneNumber,
-                                     QString user_picture)
+                                     QImage user_picture)
 {
     userInfo.name = user_name;
     userInfo.email = user_email;
@@ -403,12 +428,13 @@ void MessageUpdateProfile::process()
     QStringList list = splitMessage();
     if(!list.empty() && list.size()==6)
     {
+        QImage pic(list.at(5));
         setUserInfo(list.at(0),
                     list.at(1),
                     list.at(2),
                     list.at(3),
                     list.at(4),
-                    list.at(5));
+                    pic);
     }
 }
 
@@ -416,20 +442,20 @@ std::unique_ptr<Responce> MessageUpdateProfile::sendToDB(QSqlDatabase &Database)
 
     QSqlQuery query(Database);
     bool res = query.prepare("UPDATE UserTable SET Email=:email, Password=:password, Name=:name, LastName=:lastName,"
-                             " Picture=:picture WHERE PhoneNumber=:phone");
+                             " WHERE PhoneNumber=:phone");
     DEBUG("{}",res);
     query.bindValue(":email", getUserInfo().email);
     query.bindValue(":password", getUserInfo().password);
     query.bindValue(":name", getUserInfo().name);
     query.bindValue(":lastName", getUserInfo().lastName);
-    query.bindValue(":picture", getUserInfo().picture);
     query.bindValue(":phone", getUserInfo().phoneNumber);
+    getUserInfo().picture.save(getUserInfo().phoneNumber);
     std::unique_ptr<Responce> ptr(new UpdateProfileResponce);
-    if(query.exec()){
+    if (query.exec()) {
         DEBUG("query executed successfuly!");
         ptr->err = 0;
         return ptr;
-    }else{
+    } else {
         WARNING("{}",query.lastError().text().toStdString());
         ptr->err = 1;
         return ptr;
@@ -564,7 +590,36 @@ QByteArray MessageNewUser::serialize()
                                                     + userInfo.name.size()
                                                     + userInfo.lastName.size()
                                                     + userInfo.phoneNumber.size()
-                                                    + userInfo.picture.size()
+                                                    + 6);
+    ret.append(res, ptr - res);
+    ret += '|';
+    ret += userInfo.email.toUtf8();
+    ret += ':';
+    ret += userInfo.password.toUtf8();
+    ret += ':';
+    ret += userInfo.name.toUtf8();
+    ret += ':';
+    ret += userInfo.lastName.toUtf8();
+    ret += ':';
+    ret += userInfo.phoneNumber.toUtf8();
+    return ret;
+}
+
+QByteArray MessageUpdateProfile::serialize()
+{
+    TRACE();
+    QByteArray ret;
+    ret += 'n';
+    ret += ':';
+    char res[64];
+    uchar* pic = serializePicture(userInfo.picture);
+    [[maybe_unused]] auto [ptr, ec] = std::to_chars(res, res + 64,
+                                                      userInfo.email.size()
+                                                    + userInfo.password.size()
+                                                    + userInfo.name.size()
+                                                    + userInfo.lastName.size()
+                                                    + userInfo.phoneNumber.size()
+                                                    + userInfo.picture.sizeInBytes()
                                                     + 6);
     ret.append(res, ptr - res);
     ret += '|';
@@ -578,14 +633,8 @@ QByteArray MessageNewUser::serialize()
     ret += ':';
     ret += userInfo.phoneNumber.toUtf8();
     ret += ':';
-    ret += userInfo.picture.toUtf8();
+    ret += *pic;
     return ret;
-}
-
-QByteArray MessageUpdateProfile::serialize()
-{
-    TRACE();
-    return QByteArray();
 }
 
 QByteArray MessageAddRequest::serialize()

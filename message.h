@@ -21,6 +21,8 @@ public:
     std::string getMessage() {return msg;}
     QStringList splitMessage();
     QImage getPicture(QString picName);
+    uchar* serializePicture(QImage image);
+    QImage deserializePicture(QString image);
 signals:
 private:
     std::string msg;
@@ -79,7 +81,7 @@ public:
                      QString user_name,
                      QString user_lastName,
                      QString user_phoneNumber,
-                     QString user_picture);
+                     QImage  user_picture);
 signals:
 private:
     UserInfo userInfo;
@@ -100,7 +102,7 @@ public:
                      QString user_name,
                      QString user_lastName,
                      QString user_phoneNumber,
-                     QString user_picture);
+                     QImage  user_picture);
 signals:
 private:
     UserInfo userInfo;
