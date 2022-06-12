@@ -20,6 +20,7 @@ public:
     virtual std::unique_ptr<Responce> sendToDB(QSqlDatabase &Database);
     std::string getMessage() {return msg;}
     QStringList splitMessage();
+    QImage getPicture(QString picName);
 signals:
 private:
     std::string msg;

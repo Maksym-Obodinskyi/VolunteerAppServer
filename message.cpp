@@ -39,7 +39,10 @@ QStringList Message::splitMessage()
 {
     return QString::fromStdString(getMessage()).split(QRegExp(":"));
 }
+QImage getPicture(QString picName)
+{
 
+}
 ///////////////////////////////////////////////////////////////////////////////////////////
 MessageLogIn::MessageLogIn(int size, std::string body) : Message (size, body)
 {
@@ -76,7 +79,8 @@ std::unique_ptr<Responce> MessageLogIn::sendToDB(QSqlDatabase &Database){
         ptr->userInfo.lastName = query.value(record.indexOf("LastName")).toString();
         ptr->userInfo.email = query.value(record.indexOf("Email")).toString();
         ptr->userInfo.phoneNumber = query.value(record.indexOf("PhoneNumber")).toString();
-        ptr->userInfo.picture = query.value(record.indexOf("Picture")).toString();
+        ptr->userInfo.picture = getPicture(ptr->userInfo.phoneNumber);
+
         ptr->err = 0;
         return std::unique_ptr<Responce>(ptr);
     }else{
@@ -353,13 +357,13 @@ std::unique_ptr<Responce> MessageNewUser::sendToDB(QSqlDatabase &Database)
 {
     TRACE()
     QSqlQuery query(Database);
-    bool res = query.prepare("INSERT INTO UserTable (PhoneNumber, Password, Name, LastName, Picture, Email) VALUES (:PhoneNumber, :Password, :Name, :LastName, :Picture, :Email)");
+    bool res = query.prepare("INSERT INTO UserTable (PhoneNumber, Password, Name, LastName, Email) VALUES (:PhoneNumber, :Password, :Name, :LastName, :Email)");
     DEBUG("{}",res);
     query.bindValue(":PhoneNumber", getUserInfo().phoneNumber);
     query.bindValue(":Password", getUserInfo().password);
     query.bindValue(":Name", getUserInfo().name);
     query.bindValue(":LastName", getUserInfo().lastName);
-    query.bindValue(":Picture", getUserInfo().picture);
+    //query.bindValue(":Picture", getUserInfo().picture);
     query.bindValue(":Email", getUserInfo().email);
     std::unique_ptr<Responce> ptr(new NewUserResponce);
     if(query.exec()){
@@ -620,6 +624,16 @@ QByteArray MessageAddRequest::serialize()
 QByteArray MessageGetRequest::serialize()
 {
     TRACE();
+    TRACE();
+    QByteArray ret;
+    ret += 'g';
+    ret += ':';
+    char res[64];
+    [[maybe_unused]] auto [ptr, ec] = std::to_chars(res, res + 64, filter.size());
+    ret.append(res, ptr - res);
+    ret += '|';
+    ret += filter;
+    return ret;
     return QByteArray();
 }
 

@@ -37,7 +37,7 @@ public:
     Q_PROPERTY(QString  name            READ getName        )
     Q_PROPERTY(QString  lastName        READ getLastName    )
     Q_PROPERTY(QString  phone           READ getPhone       )
-    Q_PROPERTY(QString  picture         READ getPicture     )
+    Q_PROPERTY(QImage   picture         READ getPicture     )
 
     Q_PROPERTY(double   latitude        READ getLatitude    )
     Q_PROPERTY(double   longitude       READ getLongitude   )
@@ -54,7 +54,7 @@ public:
     QString getName();
     QString getLastName();
     QString getPhone();
-    QString getPicture();
+    QImage getPicture();
 
     double getLatitude();
     double getLongitude();
@@ -70,7 +70,7 @@ public:
     void setName(QString var);
     void setLastName(QString var);
     void setPhone(QString var);
-    void setPicture(QString var);
+    void setPicture(QImage var);
 
     void setLatitude(double var);
     void setLongitude(double var);

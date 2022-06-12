@@ -1,6 +1,7 @@
 #ifndef USERINFO_H
 #define USERINFO_H
 #include <QString>
+#include <QImage>
 
 struct UserInfo
 {
@@ -20,7 +21,7 @@ struct UserInfo
     QString name;
     QString lastName;
     QString phoneNumber;
-    QString picture;
+    QImage picture;
 };
 
 #endif // USERINFO_H

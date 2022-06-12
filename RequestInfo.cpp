@@ -112,7 +112,7 @@ QString RequestInfo::getPhone()
     return userInfo.phoneNumber;
 }
 
-QString RequestInfo::getPicture()
+QImage RequestInfo::getPicture()
 {
     return userInfo.picture;
 }
@@ -192,7 +192,7 @@ void RequestInfo::setPhone(QString var)
 
 }
 
-void RequestInfo::setPicture(QString var)
+void RequestInfo::setPicture(QImage var)
 {
     userInfo.picture = var;
 
