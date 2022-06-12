@@ -101,8 +101,10 @@ MessageAddRequest::MessageAddRequest(int size, std::string body) : Message (size
 
 void MessageAddRequest::process()
 {
-    std::cout<<"MessageAddRequest process"<<std::endl;
+    TRACE();
     QStringList list = splitMessage();
+    DEBUG("size - {}", list.size());
+    DEBUG("datas - {}", getMessage());
     if(!list.empty() && list.size()==8)
     {
         setRequestInfo( list.at(0),
@@ -207,7 +209,7 @@ std::unique_ptr<Responce> MessageRemoveRequest::sendToDB(QSqlDatabase &Database)
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////todooo
+////////////////////////////////////////////////////////////////////////////////////////////todo
 MessageGetRequest::MessageGetRequest(int size, std::string body) : Message (size, body)
 {
 
@@ -239,6 +241,7 @@ bool MessageGetRequest::isFilterUserPhone()
 std::unique_ptr<Responce> MessageGetRequest::sendToDB(QSqlDatabase &Database){
 
     QSqlQuery query(Database);
+
     GetRequestResponce* ptr = new GetRequestResponce;
     bool res ;
     if(isFilterUserPhone())
@@ -258,6 +261,7 @@ std::unique_ptr<Responce> MessageGetRequest::sendToDB(QSqlDatabase &Database){
         DEBUG("filter : {}", getFilter().toStdString());
         query.bindValue(0, getFilter());
     }
+
     DEBUG("{}",res);
 
     if (query.exec()) {
@@ -324,6 +328,7 @@ void MessageNewUser::process()
 {
     std::cout<<"MessageNewUser process"<<std::endl;
     QStringList list = splitMessage();
+    DEBUG("size - {}", list.size());
     if(!list.empty() && list.size()==6)
     {
         setUserInfo(list.at(0),
@@ -336,8 +341,8 @@ void MessageNewUser::process()
     }
 }
 
-std::unique_ptr<Responce> MessageNewUser::sendToDB(QSqlDatabase &Database){
-
+std::unique_ptr<Responce> MessageNewUser::sendToDB(QSqlDatabase &Database)
+{
     TRACE()
     QSqlQuery query(Database);
     bool res = query.prepare("INSERT INTO UserTable (PhoneNumber, Password, Name, LastName, Picture, Email) VALUES (:PhoneNumber, :Password, :Name, :LastName, :Picture, :Email)");
@@ -384,7 +389,7 @@ void MessageUpdateProfile::process()
 {
     std::cout<<"MessageUpdateProfile process"<<std::endl;
     QStringList list = splitMessage();
-    if(!list.empty() && list.size()==7)
+    if(!list.empty() && list.size()==6)
     {
         setUserInfo(list.at(0),
                     list.at(1),
@@ -537,7 +542,32 @@ QByteArray MessageLogOut::serialize()
 QByteArray MessageNewUser::serialize()
 {
     TRACE();
-    return QByteArray();
+    QByteArray ret;
+    ret += 'n';
+    ret += ':';
+    char res[64];
+    [[maybe_unused]] auto [ptr, ec] = std::to_chars(res, res + 64,
+                                                      userInfo.email.size()
+                                                    + userInfo.password.size()
+                                                    + userInfo.name.size()
+                                                    + userInfo.lastName.size()
+                                                    + userInfo.phoneNumber.size()
+                                                    + userInfo.picture.size()
+                                                    + 6);
+    ret.append(res, ptr - res);
+    ret += '|';
+    ret += userInfo.email.toUtf8();
+    ret += ':';
+    ret += userInfo.password.toUtf8();
+    ret += ':';
+    ret += userInfo.name.toUtf8();
+    ret += ':';
+    ret += userInfo.lastName.toUtf8();
+    ret += ':';
+    ret += userInfo.phoneNumber.toUtf8();
+    ret += ':';
+    ret += userInfo.picture.toUtf8();
+    return ret;
 }
 
 QByteArray MessageUpdateProfile::serialize()
@@ -549,7 +579,34 @@ QByteArray MessageUpdateProfile::serialize()
 QByteArray MessageAddRequest::serialize()
 {
     TRACE();
-    return QByteArray();
+    QByteArray body;
+    body += requestInfo.UserPhone.toUtf8();
+    body += ':';
+    body += QString::number(requestInfo._location.E).toUtf8();
+    body += ':';
+    body += QString::number(requestInfo._location.N).toUtf8();
+    body += ':';
+    body += requestInfo.description.toUtf8();
+    body += ':';
+    body += requestInfo.title.toUtf8();
+    body += ':';
+    body += requestInfo.categories.toUtf8();
+    body += ':';
+    body += QString::number(requestInfo.date).toUtf8();
+    body += ':';
+    body += QString::number(requestInfo.targetDate).toUtf8();
+
+    QByteArray ret;
+    ret += 'a';
+    ret += ':';
+    char res[64];
+    [[maybe_unused]] auto [ptr, ec] = std::to_chars(res, res + 64, body.size());
+    ret.append(res, ptr - res);
+    ret += '|';
+
+    ret += body;
+
+    return ret;
 }
 
 QByteArray MessageGetRequest::serialize()
