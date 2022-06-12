@@ -138,6 +138,8 @@ public:
 signals:
 private:
     QString filter;
+    int getUserIdForMyRequests(QSqlDatabase &Database);
+    bool isFilterUserPhone();
 
 };
 

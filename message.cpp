@@ -219,16 +219,47 @@ void MessageGetRequest::process()
     setFilter(getMessage().c_str());
     std::cout<< getFilter().toStdString()<<std::endl;
 }
-
+int MessageGetRequest::getUserIdForMyRequests(QSqlDatabase &Database)
+{
+    QSqlQuery query(Database);
+    query.prepare("SELECT id FROM UserTable WHERE PhoneNumber = ?");
+    query.bindValue(0, getFilter());
+    if (query.exec() && query.next()){
+        QSqlRecord record = query.record();
+        return query.value(record.indexOf("id")).toInt();
+    } else {
+        WARNING("User with this number is not exist");
+        return 0;
+    }
+}
+bool MessageGetRequest::isFilterUserPhone()
+{
+    return getFilter()[0] == '+';
+}
 std::unique_ptr<Responce> MessageGetRequest::sendToDB(QSqlDatabase &Database){
 
     QSqlQuery query(Database);
-    bool res ;
-    res = query.prepare("SELECT * FROM RequestTable WHERE Category = ?");
-
-    DEBUG("{}",res);
-    query.bindValue(0, getFilter());
     GetRequestResponce* ptr = new GetRequestResponce;
+    bool res ;
+    if(isFilterUserPhone())
+    {
+        int userId = getUserIdForMyRequests(Database);
+        if(!userId)
+        {
+            WARNING("Sorry, some problem with users number, can't find user with this phone");
+            ptr->err = 1;
+            return std::unique_ptr<Responce>(ptr);
+        }
+        DEBUG("userid : {}", userId);
+        res = query.prepare("SELECT * FROM RequestTable WHERE UserId = ?");
+        query.bindValue(0, userId);
+    } else {
+        res = query.prepare("SELECT * FROM RequestTable WHERE Category = ?");
+        DEBUG("filter : {}", getFilter().toStdString());
+        query.bindValue(0, getFilter());
+    }
+    DEBUG("{}",res);
+
     if (query.exec()) {
         DEBUG("query executed successfuly!");
         QString respond;
