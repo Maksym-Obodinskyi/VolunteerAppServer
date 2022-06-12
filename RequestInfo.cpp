@@ -2,7 +2,6 @@
 #define LOG_LEVEL _TRACE_
 #include "Logger.h"
 #include "RequestInfo.h"
-
 #include <QQmlEngine>
 
 //RequestInfo::RequestInfo(std::pair<double, double> _location

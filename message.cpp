@@ -59,22 +59,29 @@ void MessageLogIn::process()
 std::unique_ptr<Responce> MessageLogIn::sendToDB(QSqlDatabase &Database){
 
     QSqlQuery query(Database);
-    bool res = query.prepare("SELECT id FROM UserTable WHERE PhoneNumber = ? AND Password = ?");
+    LogInResponce* ptr = new LogInResponce;
+    bool res = query.prepare("SELECT * FROM UserTable WHERE PhoneNumber = ? AND Password = ?");
     DEBUG("{}",res);
     query.bindValue(0, getPhoneNumber());
     query.bindValue(1, getPassword());
 
-    std::unique_ptr<Responce> ptr(new LogInResponce);
     if(query.exec() && query.next()){
         DEBUG("query executed successfuly!");
         QSqlRecord record = query.record();
-        DEBUG("{}", query.value(record.indexOf("id")).toString().toStdString());
+        UserInfo user_info;
+
+        ptr->userInfo.id = query.value(record.indexOf("id")).toInt();
+        ptr->userInfo.name = query.value(record.indexOf("Name")).toString();
+        ptr->userInfo.lastName = query.value(record.indexOf("LastName")).toString();
+        ptr->userInfo.email = query.value(record.indexOf("Email")).toString();
+        ptr->userInfo.phoneNumber = query.value(record.indexOf("PhoneNumber")).toString();
+        ptr->userInfo.picture = query.value(record.indexOf("Picture")).toString();
         ptr->err = 0;
-        return ptr;
+        return std::unique_ptr<Responce>(ptr);
     }else{
         WARNING("{}", query.lastError().text().toStdString());
         ptr->err = 1;
-        return ptr;
+        return std::unique_ptr<Responce>(ptr);
     }
 }
 //////////////////////////////////////////////////////////////////////////////////////////
