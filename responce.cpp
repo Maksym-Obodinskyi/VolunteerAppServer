@@ -99,6 +99,10 @@ void LogInResponce::deserialize(QByteArray arr)
 {
     std::cout << "deserialize - " << arr.constData() << std::endl;
     if (arr.size() >= 1) {
+        Responce::deserialize(arr);
+        if (err != 0) {
+            return;
+        }
         arr.remove(0, arr.indexOf('|')+1);
         std::cout << "arr - " << arr.toStdString() << std::endl;
 
@@ -213,6 +217,10 @@ void GetRequestResponce::deserialize(QByteArray arr)
     TRACE();
     std::cout << "deserialize - " << arr.constData() << std::endl;
     if (arr.size() >= 1) {
+        Responce::deserialize(arr);
+        if (err != 0) {
+            return;
+        }
         arr.remove(0, arr.indexOf('|')+1);
         std::cout << "arr - " << arr.toStdString() << std::endl;
 
