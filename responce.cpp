@@ -2,6 +2,7 @@
 #define LOG_LEVEL _TRACE_
 #include "Logger.h"
 #include "responce.h"
+#include "message.h"
 
 #include <QStringList>
 #include <QRegExp>
@@ -56,7 +57,6 @@ void Responce::deserialize(QByteArray arr)
     }
 }
 
-
 /////////////////////////////////////////////////////////////////////////
 /// \brief LogInResponce::LogInResponce
 ///
@@ -89,7 +89,7 @@ QByteArray LogInResponce::serialize()
     ret += addItem(userInfo.lastName);
     ret += addItem(userInfo.email);
     ret += addItem(userInfo.phoneNumber);
-    ret += userInfo.picture + ";";
+    ret += QByteArray(reinterpret_cast<char*>(Message::serializePicture(userInfo.picture))) + ";";
 
     std::cout<< "ret: "<< ret.constData() << std::endl;
     return ret;
@@ -115,7 +115,7 @@ void LogInResponce::deserialize(QByteArray arr)
             userInfo.lastName = InfoList[2];
             userInfo.email = InfoList[3];
             userInfo.phoneNumber = InfoList[4];
-            userInfo.picture = InfoList[5];
+            userInfo.picture = Message::deserializePicture(InfoList[5]);
         }
         err = 0;
     } else {
@@ -191,7 +191,7 @@ QByteArray GetRequestResponce::serialize()
         return ret;
     }
     ret += '|';
-    for( const auto &item : requestsList)
+    for(auto &item : requestsList)
     {
         ret += addItem(item.id);
         ret += addItem(item.title);
@@ -206,7 +206,8 @@ QByteArray GetRequestResponce::serialize()
         ret += addItem(item.userInfo.email);
         ret += addItem(item.userInfo.phoneNumber);
 
-        ret += item.userInfo.picture + ";";
+        ret += QByteArray(reinterpret_cast<char*>(Message::serializePicture(item.userInfo.picture)));
+        ret += ";";
     }
     std::cout<< "ret: "<< ret.constData() << std::endl;
     return ret;
@@ -243,7 +244,7 @@ void GetRequestResponce::deserialize(QByteArray arr)
                 reqInfo.userInfo.lastName = InfoList[9];
                 reqInfo.userInfo.email = InfoList[10];
                 reqInfo.userInfo.phoneNumber = InfoList[11];
-                reqInfo.userInfo.picture = InfoList[12];
+                reqInfo.userInfo.picture = Message::deserializePicture(InfoList[12]);
 
                 requestsList.append(reqInfo);
             }

@@ -10,6 +10,7 @@
 #include <QSqlRecord>
 #include <QVariant>
 #include <QVector>
+#include <QImage>
 #include <charconv>
 
 Message::Message(QObject *parent) : QObject(parent)
@@ -43,6 +44,7 @@ QImage Message::getPicture(QString picName)
 {
 
 }
+
 QImage Message::deserializePicture(QString image)
 {
 
@@ -57,6 +59,7 @@ QImage Message::deserializePicture(QString image)
     QImage pic(bits, picWidth, picHeidht, picBytesPerLine, picFormat);
     return pic;
 }
+
 uchar* Message::serializePicture(QImage &image)
 {
     int picWidth = image.width();
@@ -348,13 +351,11 @@ void MessageNewUser::setUserInfo(QString user_email,
                                  QString user_password,
                                  QString user_name,
                                  QString user_lastName,
-                                 QString user_phoneNumber,
-                                 QImage user_picture)
+                                 QString user_phoneNumber)
 {
     userInfo.name = user_name;
     userInfo.email = user_email;
     userInfo.password = user_password;
-    userInfo.picture = user_picture;
     userInfo.lastName = user_lastName;
     userInfo.phoneNumber = user_phoneNumber;
     std::cout<<"setUserInfo"<<std::endl;
@@ -365,16 +366,13 @@ void MessageNewUser::process()
     std::cout<<"MessageNewUser process"<<std::endl;
     QStringList list = splitMessage();
     DEBUG("size - {}", list.size());
-
-    if(!list.empty() && list.size()==6)
+    if(!list.empty() && list.size()==5)
     {
-        QImage pic = deserializePicture(list.at(5));
         setUserInfo(list.at(0),
                     list.at(1),
                     list.at(2),
                     list.at(3),
-                    list.at(4),
-                    pic);////////////////todo
+                    list.at(4));////////////////todo
        std::cout<< getUserInfo().name.toStdString()<<std::endl;
     }
 }
@@ -590,7 +588,7 @@ QByteArray MessageNewUser::serialize()
                                                     + userInfo.name.size()
                                                     + userInfo.lastName.size()
                                                     + userInfo.phoneNumber.size()
-                                                    + 6);
+                                                    + 5);
     ret.append(res, ptr - res);
     ret += '|';
     ret += userInfo.email.toUtf8();
