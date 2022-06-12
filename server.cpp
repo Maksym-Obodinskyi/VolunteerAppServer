@@ -106,8 +106,6 @@ void Server::parseUserRequest(QByteArray &request)
     msg->process();
     auto answer = msg->sendToDB(Database);
     sendRequestStatus(answer->serialize());
-    answer->deserialize(answer->serialize());
-    DEBUG("name: {}", dynamic_cast<GetRequestResponce*>(answer.get())->requestsList[0].userInfo.name.toStdString());
 }
 
 int Server::getRequestsSize(const QByteArray& request)
