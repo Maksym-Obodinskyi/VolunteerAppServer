@@ -2,11 +2,43 @@
 #define RESPONCE_H
 
 #include <iostream>
-
-
 #include <QByteArray>
-
+#include <QString>
+#include <QVector>
+#include <QStringList>
+#include <QRegExp>
 #include <charconv>
+
+struct location
+{
+    double N;
+    double E;
+};
+
+struct UserInfo
+{
+    int id;
+    QString email;
+    QString password;
+    QString name;
+    QString lastName;
+    QString phoneNumber;
+    QString picture;
+    double rating;
+};
+
+struct RequestInfo
+{
+    int id;
+    QString UserPhone;
+    location _location;
+    QString description;
+    QString title;
+    QString categories;
+    int date;
+    int targetDate;
+    UserInfo userInfo;
+};
 
 struct Responce {
     char type;
@@ -73,7 +105,91 @@ struct AddRequestResponce : Responce {
 /// \brief The GetRequestResponce struct
 /////////////////////////////////////////////////////////////
 struct GetRequestResponce : Responce {
+    int err;
+    QVector<RequestInfo> requestsList;
     GetRequestResponce() : Responce('g') {}
+    QByteArray serialize() override
+    {
+        QByteArray ret;
+        ret += type;
+        ret += ':';
+        char arr[5];
+        auto [ptr, ec] = std::to_chars(arr, arr + 5, err);
+        if (ec == std::errc()) {
+            for (auto symbol = arr; symbol != ptr; symbol++) {
+                ret += *symbol;
+            }
+        } else {
+            ret += '9';
+            return ret;
+        }
+        ret += '|';
+        for( const auto &item : requestsList)
+        {
+            ret += addItem(item.id);
+            ret += addItem(item.title);
+            ret += addItem(item.description);
+            ret += addItem(item._location.E);
+            ret += addItem(item._location.N);
+            ret += addItem(item.date);
+            ret += addItem(item.categories);
+            ret += addItem(item.targetDate);
+            ret += addItem(item.userInfo.name);
+            ret += addItem(item.userInfo.lastName);
+            ret += addItem(item.userInfo.email);
+            ret += addItem(item.userInfo.phoneNumber);
+
+            ret += item.userInfo.picture + ";";
+        }
+        std::cout<< "ret: "<< ret.constData() << std::endl;
+        return ret;
+    }
+     void deserialize(QByteArray arr) override
+    {
+         std::cout << "deserialize - " << arr.constData() << std::endl;
+         if (arr.size() >= 1) {
+             arr.remove(0, arr.indexOf('|')+1);
+             std::cout << "arr - " << arr.toStdString() << std::endl;
+
+             QList<QByteArray> reqList =  arr.split(';');
+             for(auto req : reqList)
+             {
+                 RequestInfo reqInfo;
+                 std::cout << "req - " << req.toStdString() << std::endl;
+                 QList<QByteArray> InfoList =  req.split(':');
+                 if(InfoList.size() > 1)
+                 {
+                     reqInfo.id = InfoList[0].toInt();
+                     reqInfo.title = InfoList[1];
+                     reqInfo.description = InfoList[2];
+                     reqInfo._location.E = InfoList[3].toDouble();
+                     reqInfo._location.N = InfoList[4].toDouble();
+                     reqInfo.date = InfoList[5].toInt();
+                     reqInfo.categories = InfoList[6];
+                     reqInfo.targetDate = InfoList[7].toInt();
+                     reqInfo.userInfo.name = InfoList[8];
+                     reqInfo.userInfo.lastName = InfoList[9];
+                     reqInfo.userInfo.email = InfoList[10];
+                     reqInfo.userInfo.phoneNumber = InfoList[11];
+                     reqInfo.userInfo.picture = InfoList[12];
+
+                     requestsList.append(reqInfo);
+                 }
+             }
+             err = 0;
+         } else {
+             std::cout << "wtf - "<< std::endl;
+             err = 1001;
+         }
+    }
+    QByteArray addItem(QString itemsField)
+    {
+        return itemsField.toUtf8() + ":";
+    }
+    QByteArray addItem(int itemsField)
+    {
+        return QString::number(itemsField).toUtf8() + ":";
+    }
 };
 /////////////////////////////////////////////////////////////
 /// \TODO: Finish GetResponce serialize

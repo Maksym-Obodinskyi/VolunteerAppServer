@@ -9,12 +9,16 @@
 #include <QSqlError>
 #include <QSqlRecord>
 #include <QVariant>
+#include <QVector>
 
 Message::Message(QObject *parent) : QObject(parent)
 {
 
 }
-
+Message::~Message()
+{
+    TRACE();
+}
 Message::Message(int size, std::string body)
                 : msg(body), msgSize(size)
 {
@@ -219,25 +223,49 @@ void MessageGetRequest::process()
 std::unique_ptr<Responce> MessageGetRequest::sendToDB(QSqlDatabase &Database){
 
     QSqlQuery query(Database);
-    bool res = query.prepare("SELECT * FROM RequestTable WHERE Category = ?");
+    bool res ;
+    res = query.prepare("SELECT * FROM RequestTable WHERE Category = ?");
+
     DEBUG("{}",res);
     query.bindValue(0, getFilter());
-    std::unique_ptr<Responce> ptr(new GetRequestResponce);
-    if(query.exec()){
+    GetRequestResponce* ptr = new GetRequestResponce;
+    if (query.exec()) {
         DEBUG("query executed successfuly!");
         QString respond;
-        while(query.next())
+        while (query.next())
         {
+            RequestInfo request;
             QSqlRecord record = query.record();
-            DEBUG("{}", query.value(record.indexOf("id")).toString().toStdString());
+            request.id = query.value(record.indexOf("id")).toInt();
+            request.userInfo.id = query.value(record.indexOf("UserId")).toInt();
+            request.date = query.value(record.indexOf("Date")).toInt();
+            request.title = query.value(record.indexOf("Title")).toString();
+            request._location.E = query.value(record.indexOf("LocationE")).toDouble();
+            request._location.N = query.value(record.indexOf("LocationN")).toDouble();
+            request.categories = query.value(record.indexOf("Category")).toString();
+            request.targetDate = query.value(record.indexOf("TargetDate")).toInt();
+            request.description = query.value(record.indexOf("Description")).toString();
+
+            QSqlQuery queryUser(Database);
+            res = queryUser.prepare("SELECT * FROM UserTable WHERE id = ?");
+            DEBUG("{}",res);
+            queryUser.bindValue(0, QString::number(request.userInfo.id));
+            if(queryUser.exec() && queryUser.next()){
+                record = queryUser.record();
+                request.userInfo.name = queryUser.value(record.indexOf("Name")).toString();
+                request.userInfo.lastName = queryUser.value(record.indexOf("LastName")).toString();
+                request.userInfo.email = queryUser.value(record.indexOf("Email")).toString();
+                request.userInfo.phoneNumber = queryUser.value(record.indexOf("PhoneNumber")).toString();
+                request.userInfo.picture = queryUser.value(record.indexOf("Picture")).toString();
+            }
+            ptr->requestsList.append(request);
         }
         ptr->err = 0;
-        return ptr;
-    }else{
+    } else {
         WARNING("{}", query.lastError().text().toStdString());
         ptr->err = 1;
-        return ptr;
     }
+    return std::unique_ptr<Responce>(ptr);
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
 MessageNewUser::MessageNewUser(int size, std::string body) : Message (size, body)
@@ -405,7 +433,7 @@ void MessageUpdateRequest::setRequestInfo(int request_id,
     requestInfo.targetDate = request_targetDate;
 }
 
-std::unique_ptr<Responce> MessageUpdateRequest::sendToDB(QSqlDatabase &Database){ ///////////////////tododdodododod
+std::unique_ptr<Responce> MessageUpdateRequest::sendToDB(QSqlDatabase &Database){ ///////////////////if we have request id?????
     QSqlQuery query(Database);
     std::unique_ptr<Responce> ptr(new UpdateRequestResponce);
     bool res =query.prepare("SELECT id FROM UserTable WHERE PhoneNumber = ?");

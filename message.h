@@ -7,44 +7,13 @@
 #include "responce.h"
 #include <memory>
 
-struct location
-{
-    double N;
-    double E;
-};
-
-struct UserInfo
-{
-    int id;
-    QString email;
-    QString password;
-    QString name;
-    QString lastName;
-    QString phoneNumber;
-    QString picture;
-    double rating;
-};
-
-struct RequestInfo
-{
-    int id;
-    QString UserPhone;
-    location _location;
-    QString description;
-    QString title;
-    QString categories;
-    int date;
-    int targetDate;
-    UserInfo userInfo;
-};
-
-
 
 class Message : public QObject
 {
     Q_OBJECT
 public:
     explicit Message(QObject *parent = nullptr);
+    virtual ~Message();
     Message(int msgSize, std::string body);
     virtual void process();
     virtual QByteArray serialize();
