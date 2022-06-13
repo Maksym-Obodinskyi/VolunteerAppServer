@@ -15,6 +15,7 @@ struct Responce {
     Responce(char _type = '|');
 
     QByteArray addItem(QString itemsField);
+    QByteArray addItem(double itemsField);
     QByteArray addItem(int itemsField);
 
     virtual QByteArray serialize();
@@ -50,7 +51,6 @@ struct AddRequestResponce : Responce {
 /////////////////////////////////////////////////////////////
 
 struct GetRequestResponce : Responce {
-    int err;
     QVector<RequestInfo> requestsList;
     GetRequestResponce();
     QByteArray serialize() override;

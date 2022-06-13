@@ -302,8 +302,9 @@ std::unique_ptr<Responce> MessageGetRequest::sendToDB(QSqlDatabase &Database){
 
     GetRequestResponce* ptr = new GetRequestResponce;
     bool res ;
-    if(isFilterUserPhone())
-    {
+    if (getFilter().isEmpty()) {
+        res = query.prepare("SELECT * FROM RequestTable");
+    } else if(isFilterUserPhone()) {
         int userId = getUserIdForMyRequests(Database);
         if(!userId)
         {

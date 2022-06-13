@@ -18,6 +18,11 @@ QByteArray Responce::addItem(QString itemsField)
     return itemsField.toUtf8() + ":";
 }
 
+QByteArray Responce::addItem(double itemsField)
+{
+    return QString::number(itemsField).toUtf8() + ":";
+}
+
 QByteArray Responce::addItem(int itemsField)
 {
     return QString::number(itemsField).toUtf8() + ":";
@@ -42,7 +47,6 @@ QByteArray Responce::serialize()
 
 void Responce::deserialize(QByteArray arr)
 {
-    std::cout << "deserialize - " << arr.constData() << std::endl;
     if (arr.size() >= 1) {
         int result;
         const auto[_, ec] = std::from_chars(arr.constData(), arr.constData() + arr.size(), result);
@@ -99,14 +103,12 @@ QByteArray LogInResponce::serialize()
 
 void LogInResponce::deserialize(QByteArray arr)
 {
-    std::cout << "deserialize - " << arr.constData() << std::endl;
     if (arr.size() >= 1) {
         Responce::deserialize(arr);
         if (err != 0) {
             return;
         }
         arr.remove(0, arr.indexOf('|')+1);
-        std::cout << "arr - " << arr.toStdString() << std::endl;
 
         QList<QByteArray> InfoList =  arr.split(':');
         if(InfoList.size() == 6)
@@ -217,19 +219,15 @@ QByteArray GetRequestResponce::serialize()
 void GetRequestResponce::deserialize(QByteArray arr)
 {
     TRACE();
-    std::cout << "deserialize - " << arr.constData() << std::endl;
     if (arr.size() >= 1) {
         Responce::deserialize(arr);
         if (err != 0) {
             return;
         }
         arr.remove(0, arr.indexOf('|')+1);
-        std::cout << "arr - " << arr.toStdString() << std::endl;
-
         QList<QByteArray> reqList =  arr.split(';');
         for(auto req : reqList) {
             RequestInfo reqInfo;
-            std::cout << "req - " << req.toStdString() << std::endl;
             QList<QByteArray> InfoList =  req.split(':');
             if(InfoList.size() > 1)
             {
