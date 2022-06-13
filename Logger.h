@@ -31,7 +31,7 @@
 
 #define PRINTFUNCTION(MSG, LEVEL, FILE, LINE, ...) \
     if (_##LEVEL##_ <= LOG_LEVEL) { \
-        std::cout << fmt::format("[{}]:{}:{}:" #LEVEL ":" MSG, LOG_CATEGORY, FILE, LINE, ##__VA_ARGS__) << std::endl; \
+        std::cout << fmt::format("[{}]:{}:{}:{}:" #LEVEL ":" MSG, LOG_CATEGORY, FILE, LINE, __FUNCTION__, ##__VA_ARGS__) << std::endl; \
     }
 
 #define TRACE()             PRINTFUNCTION("",  TRACE, __FILENAME__, __LINE__)

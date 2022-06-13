@@ -21,7 +21,7 @@ public:
     std::string getMessage() {return msg;}
     QStringList splitMessage();
     QImage getPicture(QString picName);
-    static uchar* serializePicture(QImage & image);
+    static QByteArray serializePicture(QImage & image);
     static QImage deserializePicture(QString image);
 signals:
 private:

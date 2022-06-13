@@ -57,6 +57,7 @@ void Responce::deserialize(QByteArray arr)
     }
 }
 
+
 /////////////////////////////////////////////////////////////////////////
 /// \brief LogInResponce::LogInResponce
 ///
@@ -69,6 +70,7 @@ LogInResponce::LogInResponce() : Responce('l')
 
 QByteArray LogInResponce::serialize()
 {
+    TRACE();
     QByteArray ret;
     ret += type;
     ret += ':';
@@ -89,7 +91,7 @@ QByteArray LogInResponce::serialize()
     ret += addItem(userInfo.lastName);
     ret += addItem(userInfo.email);
     ret += addItem(userInfo.phoneNumber);
-    ret += QByteArray(reinterpret_cast<char*>(Message::serializePicture(userInfo.picture))) + ";";
+    ret += Message::serializePicture(userInfo.picture) + ";";
 
     std::cout<< "ret: "<< ret.constData() << std::endl;
     return ret;
@@ -106,7 +108,6 @@ void LogInResponce::deserialize(QByteArray arr)
         arr.remove(0, arr.indexOf('|')+1);
         std::cout << "arr - " << arr.toStdString() << std::endl;
 
-        UserInfo userInfo;
         QList<QByteArray> InfoList =  arr.split(':');
         if(InfoList.size() == 6)
         {
@@ -206,7 +207,7 @@ QByteArray GetRequestResponce::serialize()
         ret += addItem(item.userInfo.email);
         ret += addItem(item.userInfo.phoneNumber);
 
-        ret += QByteArray(reinterpret_cast<char*>(Message::serializePicture(item.userInfo.picture)));
+        ret += Message::serializePicture(item.userInfo.picture);
         ret += ";";
     }
     std::cout<< "ret: "<< ret.constData() << std::endl;

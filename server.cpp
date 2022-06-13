@@ -104,8 +104,11 @@ void Server::parseUserRequest(QByteArray &request)
             break;
     }
     msg->process();
+    TRACE();
     auto answer = msg->sendToDB(Database);
+    TRACE();
     sendRequestStatus(answer->serialize());
+    TRACE();
 }
 
 int Server::getRequestsSize(const QByteArray& request)
